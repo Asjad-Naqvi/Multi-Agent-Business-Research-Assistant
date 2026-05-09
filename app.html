@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Business Research Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 24px;
+      background: #1a1d27;
+      border-bottom: 1px solid #2d3148;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 1.1rem; font-weight: 600; color: #fff; }
+    header span { font-size: 0.75rem; color: #6b7280; }
+
+    .pipeline {
+      display: flex;
+      gap: 6px;
+      padding: 10px 24px;
+      background: #13151f;
+      border-bottom: 1px solid #2d3148;
+      flex-wrap: wrap;
+    }
+
+    .agent-badge {
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #1e2235;
+      color: #6b7280;
+      border: 1px solid #2d3148;
+      transition: all 0.3s;
+    }
+
+    .agent-badge.active {
+      background: #1d3557;
+      color: #60a5fa;
+      border-color: #3b82f6;
+    }
+
+    .agent-badge.done {
+      background: #1a2e1a;
+      color: #4ade80;
+      border-color: #22c55e;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.6;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: #1d4ed8;
+      color: #fff;
+      border-radius: 12px 12px 2px 12px;
+    }
+
+    .message.assistant {
+      align-self: flex-start;
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 12px 12px 12px 2px;
+    }
+
+    .message.clarification {
+      align-self: flex-start;
+      background: #2d1f0e;
+      border: 1px solid #92400e;
+      border-radius: 12px 12px 12px 2px;
+      color: #fbbf24;
+    }
+
+    .message.system {
+      align-self: center;
+      background: transparent;
+      color: #4b5563;
+      font-size: 0.75rem;
+      border: none;
+      padding: 4px;
+    }
+
+    .meta {
+      font-size: 0.72rem;
+      color: #4b5563;
+      margin-top: 6px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .meta span { display: flex; align-items: center; gap: 4px; }
+
+    .thinking {
+      align-self: flex-start;
+      display: flex;
+      gap: 5px;
+      padding: 12px 16px;
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 12px 12px 12px 2px;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #3b82f6;
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .input-area {
+      padding: 16px 24px;
+      background: #1a1d27;
+      border-top: 1px solid #2d3148;
+      display: flex;
+      gap: 10px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #3b82f6; }
+    input::placeholder { color: #4b5563; }
+
+    button {
+      padding: 12px 20px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #1e2235; color: #4b5563; cursor: not-allowed; }
+
+    .new-btn {
+      padding: 12px 14px;
+      background: #1e2235;
+      color: #6b7280;
+      border: 1px solid #2d3148;
+    }
+
+    .new-btn:hover { background: #2d3148; color: #e2e8f0; }
+
+    .clarify-banner {
+      background: #2d1f0e;
+      border: 1px solid #92400e;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.8rem;
+      color: #fbbf24;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>🔍</div>
+  <div>
+    <h1>Business Research Assistant</h1>
+    <span id="thread-label">Starting new thread…</span>
+  </div>
+</header>
+
+<div class="pipeline">
+  <div class="agent-badge" id="badge-clarity">1. Clarity Agent</div>
+  <div class="agent-badge" id="badge-research">2. Research Agent</div>
+  <div class="agent-badge" id="badge-validator">3. Validator Agent</div>
+  <div class="agent-badge" id="badge-synthesis">4. Synthesis Agent</div>
+</div>
+
+<div id="chat"></div>
+
+<div class="input-area">
+  <input id="input" type="text" placeholder="Ask about any company…" />
+  <button id="send-btn" onclick="sendQuery()">Send</button>
+  <button class="new-btn" onclick="newThread()">New Thread</button>
+</div>
+
+<script>
+  const API = "http://localhost:8000";
+  let threadId = null;
+  let awaitingClarification = false;
+
+  function newThread() {
+    threadId = null;
+    awaitingClarification = false;
+    resetBadges();
+    document.getElementById("chat").innerHTML = "";
+    document.getElementById("thread-label").textContent = "New thread started";
+    document.getElementById("input").placeholder = "Ask about any company…";
+    addMessage("New conversation started.", "system");
+  }
+
+  function resetBadges() {
+    ["clarity","research","validator","synthesis"].forEach(b => {
+      document.getElementById("badge-" + b).className = "agent-badge";
+    });
+  }
+
+  function setBadge(name, state) {
+    const el = document.getElementById("badge-" + name);
+    el.className = "agent-badge " + state;
+  }
+
+  function addMessage(text, type, meta = null) {
+    const chat = document.getElementById("chat");
+    const div = document.createElement("div");
+    div.className = "message " + type;
+    div.textContent = text;
+    if (meta) {
+      const m = document.createElement("div");
+      m.className = "meta";
+      m.innerHTML = meta;
+      div.appendChild(m);
+    }
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    return div;
+  }
+
+  function showThinking() {
+    const chat = document.getElementById("chat");
+    const div = document.createElement("div");
+    div.className = "thinking";
+    div.id = "thinking";
+    div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function hideThinking() {
+    const el = document.getElementById("thinking");
+    if (el) el.remove();
+  }
+
+  function setLoading(on) {
+    document.getElementById("send-btn").disabled = on;
+    document.getElementById("input").disabled = on;
+  }
+
+  async function sendQuery() {
+    const input = document.getElementById("input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = "";
+    addMessage(text, "user");
+    setLoading(true);
+    showThinking();
+    resetBadges();
+
+    try {
+      let result;
+
+      if (awaitingClarification) {
+        // Resuming after clarification
+        setBadge("clarity", "active");
+        const res = await fetch(API + "/clarify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clarification: text, thread_id: threadId })
+        });
+        result = await res.json();
+        awaitingClarification = false;
+      } else {
+        // New query
+        setBadge("clarity", "active");
+        const res = await fetch(API + "/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: text, thread_id: threadId })
+        });
+        result = await res.json();
+      }
+
+      hideThinking();
+      threadId = result.thread_id;
+      document.getElementById("thread-label").textContent =
+        "Thread: " + threadId.substring(0, 8) + "…";
+
+      if (result.status === "needs_clarification") {
+        setBadge("clarity", "active");
+        awaitingClarification = true;
+        addMessage("🤔 " + result.question, "clarification");
+        input.placeholder = "Type your clarification…";
+
+      } else if (result.status === "complete") {
+        setBadge("clarity", "done");
+        setBadge("research", "done");
+        if (result.research_attempts > 1) setBadge("validator", "done");
+        setBadge("synthesis", "done");
+
+        const confidence = result.confidence_score != null
+          ? `<span>⚡ Confidence: ${result.confidence_score}/10</span><span>🔄 Attempts: ${result.research_attempts}</span>`
+          : "";
+        addMessage(result.answer, "assistant", confidence);
+        input.placeholder = "Ask a follow-up question…";
+
+      } else if (result.detail) {
+        addMessage("❌ Error: " + result.detail, "system");
+      }
+
+    } catch (err) {
+      hideThinking();
+      addMessage("❌ Could not reach the server. Is it running on port 8000?", "system");
+    }
+
+    setLoading(false);
+    document.getElementById("input").focus();
+  }
+
+  // Send on Enter key
+  document.getElementById("input").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendQuery();
+  });
+
+  // Init
+  addMessage("Welcome! Ask me about any company — earnings, stock price, leadership, competitors, and more.", "assistant");
+</script>
+</body>
+</html>
