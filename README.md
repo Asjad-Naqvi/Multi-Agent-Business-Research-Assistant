@@ -66,6 +66,7 @@ START
 ```bash
 pip install langgraph langchain langchain-anthropic langchain-community \
             tavily-python python-dotenv
+or grok for free
 ```
 
 ### 2. Configure environment
@@ -77,6 +78,7 @@ cp .env.example .env
 
 Required:
 - `ANTHROPIC_API_KEY` — from [console.anthropic.com](https://console.anthropic.com)
+- or grok for free
 
 Optional (recommended):
 - `TAVILY_API_KEY` — from [tavily.com](https://tavily.com) for live search
